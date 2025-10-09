@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeepSeek Ping-Pong Chat</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>DeepSeek Ping-Pong</h1>
+      <p class="subtitle">Führe Dialoge mit DeepSeek, kontrolliere den Verlauf und sieh Token-Verbrauch sowie Status auf einen Blick.</p>
+    </header>
+    <section class="chat-wrapper" aria-live="polite" aria-label="Chatverlauf">
+      <div id="chat" role="log" aria-live="polite"></div>
+    </section>
+    <form id="chat-form">
+      <fieldset class="field-group">
+        <label for="system-prompt">System-Prompt (optional)</label>
+        <textarea id="system-prompt" name="system_prompt" rows="2" placeholder="z. B. Du antwortest höflich und knapp."></textarea>
+      </fieldset>
+      <fieldset class="field-group">
+        <label for="message">Nachricht</label>
+        <textarea id="message" name="message" rows="4" placeholder="Frag DeepSeek etwas…" required></textarea>
+      </fieldset>
+      <div class="controls">
+        <div class="button-row">
+          <button type="submit" id="send">Senden</button>
+          <button type="button" id="clear" class="secondary">Verlauf löschen</button>
+        </div>
+        <div class="status-block">
+          <span id="status" class="status-text" role="status" aria-live="assertive">Initialisiere …</span>
+          <span id="usage" class="usage"></span>
+        </div>
+      </div>
+    </form>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

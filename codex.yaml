@@ -1,0 +1,47 @@
+workdir: ./project
+log_dir: .codex_logs
+adapter: env  # "mock", "openai" oder "ollama"; "env" liest CODEX_LOOP_ADAPTER
+max_iters: 10
+dry_run: false
+sleep_between_iters_sec: 0
+
+model: gpt-code
+temperature: 0.2
+max_tokens: 2000
+
+goal: >-
+  Implementiere oder verbessere das Zielprojekt so, dass alle Checks erfolgreich
+  sind und die README eine kurze Nutzungserklärung enthält.
+
+constraints:
+  - Kleine, nachvollziehbare Patches
+  - Keine geheimen Keys oder Zugangsdaten speichern
+  - Änderungen müssen reproduzierbar getestet werden
+
+commands:
+  - "python -m pytest -q || true"
+  - "ruff check . || true"
+
+success_rules:
+  all_commands_zero: false
+  must_contain:
+    - file: README.md
+      contains: Auto-Iteration
+  forbidden:
+    - file: src/app.py
+      contains: "eval("
+
+system_prompt: |
+  You are a careful code-improvement agent. Reply ONLY with JSON using the
+  schema {"plan": str, "patches": [{"file": str, "content": str}], "tests": [str],
+  "notes": str}. Follow the constraints exactly, keep changes minimal and safe,
+  and include full file content when creating or replacing files.
+
+github_sync:
+  enabled: false
+  repository: deinuser/deinrepo
+  branch: main
+  remote_base: codex_logs
+  message_template: "Codex iteration {iter_label}"
+  paths:
+    - ".codex_logs/{iter_label}.json"
