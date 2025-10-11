@@ -13,6 +13,11 @@ Codex-Sitzung oder verwende sie als Vorlage für `next_codex_prompt.json`, um
 gezielt neue Module wie `clock_core.py`, `chunker.py` oder `replicator.py`
 anzustoßen.
 
+Eine aktuelle Einschätzung zu Stärken, Risiken und empfohlenen nächsten
+Schritten findest du in [`docs/assessment.md`](docs/assessment.md). Das Dokument
+liefert eine kurze Außenperspektive darauf, wo das Projekt bereits überzeugt
+und an welchen Stellen Aufräum- oder Fokussierungsbedarf besteht.
+
 ## Verzeichnisübersicht
 
 Eine vollständige, automatisch generierte Strukturübersicht des Repositorys
