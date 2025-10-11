@@ -11,7 +11,9 @@ System- und Iterationsprompts inklusive Modulaufträgen, die du direkt in den
 `codex_auto_loop` einspeisen kannst. Kopiere die JSON-Blöcke in deine
 Codex-Sitzung oder verwende sie als Vorlage für `next_codex_prompt.json`, um
 gezielt neue Module wie `clock_core.py`, `chunker.py` oder `replicator.py`
-anzustoßen.
+anzustoßen. Für eine sofort einsetzbare "Copy-&-Go"-Zusammenstellung mit
+Systemprompt, Initialauftrag, Modul-Bausteinen und Konfigurationssnippets lohnt
+ein Blick in [`docs/codex_copy_ready.md`](docs/codex_copy_ready.md).
 
 Eine aktuelle Einschätzung zu Stärken, Risiken und empfohlenen nächsten
 Schritten findest du in [`docs/assessment.md`](docs/assessment.md). Das Dokument
