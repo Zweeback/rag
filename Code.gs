@@ -342,3 +342,179 @@ function listRecentDriveFiles() {
 
   return files;
 }
+
+/**
+ * Processes queued prompts in a Google Sheet and writes ChatGPT answers back.
+ * Configure PROMPT_SHEET_ID in Script Properties and create a sheet named "Prompts"
+ * with the columns: Timestamp | Prompt | Status | Response.
+ */
+function processSheetPrompts() {
+  const sheetId = getSecret('PROMPT_SHEET_ID');
+  if (!sheetId) {
+    throw new Error('Bitte hinterlege die Spreadsheet-ID in den Projekteigenschaften (PROMPT_SHEET_ID).');
+  }
+
+  const sheet = SpreadsheetApp.openById(sheetId).getSheetByName('Prompts');
+  if (!sheet) {
+    throw new Error('Im Spreadsheet fehlt das Arbeitsblatt "Prompts".');
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  const updates = [];
+
+  for (let row = 1; row < rows.length; row++) {
+    const status = rows[row][2];
+    const prompt = rows[row][1];
+    if (!prompt || (status && status.toString().toLowerCase() === 'fertig')) {
+      continue;
+    }
+
+    const response = askOpenAI(prompt);
+    updates.push({ row: row + 1, response: response });
+  }
+
+  updates.forEach((update) => {
+    const rowIndex = update.row;
+    sheet.getRange(rowIndex, 3).setValue('Fertig');
+    sheet.getRange(rowIndex, 4).setValue(update.response);
+    sheet.getRange(rowIndex, 1).setValue(new Date());
+  });
+
+  return { processed: updates.length };
+}
+
+/**
+ * Creates a short AI summary of the most recent files inside a Drive folder.
+ * Configure WATCH_FOLDER_ID in Script Properties.
+ * @return {Object} summary details.
+ */
+function summarizeDriveFolder() {
+  const folderId = getSecret('WATCH_FOLDER_ID');
+  if (!folderId) {
+    throw new Error('Bitte hinterlege die Drive-Ordner-ID in den Projekteigenschaften (WATCH_FOLDER_ID).');
+  }
+
+  const folder = DriveApp.getFolderById(folderId);
+  const iterator = folder.getFiles();
+  const files = [];
+  while (iterator.hasNext() && files.length < 10) {
+    const file = iterator.next();
+    files.push({
+      name: file.getName(),
+      updated: file.getLastUpdated(),
+      url: file.getUrl()
+    });
+  }
+
+  if (!files.length) {
+    return { summary: 'Im beobachteten Ordner gibt es keine Dateien.' };
+  }
+
+  const prompt = 'Fasse diese Dateien für meinen Tagesüberblick knapp zusammen:\n' +
+    files.map((file) => `${file.name} – aktualisiert am ${file.updated.toISOString()}`).join('\n');
+  const summary = askOpenAI(prompt);
+
+  return {
+    folder: folder.getName(),
+    files: files,
+    summary: summary
+  };
+}
+
+/**
+ * Fetches the latest open GitHub issues and produces a German summary.
+ * Configure GITHUB_TOKEN (classic PAT or fine-grained) and GITHUB_REPO (owner/repo).
+ * @return {Object}
+ */
+function fetchGitHubDigest() {
+  const token = getSecret('GITHUB_TOKEN');
+  const repo = getSecret('GITHUB_REPO');
+  if (!token || !repo) {
+    throw new Error('Bitte hinterlege GITHUB_TOKEN und GITHUB_REPO in den Projekteigenschaften.');
+  }
+
+  const endpoint = 'https://api.github.com/repos/' + repo + '/issues?state=open&per_page=10';
+  const response = UrlFetchApp.fetch(endpoint, {
+    method: 'get',
+    headers: {
+      Authorization: 'token ' + token,
+      'User-Agent': 'AppsScript-Archivator'
+    },
+    muteHttpExceptions: true
+  });
+
+  if (response.getResponseCode() !== 200) {
+    throw new Error('GitHub-API Aufruf fehlgeschlagen: ' + response.getContentText());
+  }
+
+  const issues = JSON.parse(response.getContentText());
+  const list = issues.map((issue) => ({
+    number: issue.number,
+    title: issue.title,
+    url: issue.html_url
+  }));
+
+  const prompt = 'Fasse diese offenen GitHub-Issues auf Deutsch stichpunktartig zusammen:\n' +
+    list.map((issue) => `#${issue.number}: ${issue.title}`).join('\n');
+  const summary = askOpenAI(prompt);
+
+  return { issues: list, summary: summary };
+}
+
+/**
+ * Sends structured automation data to a Zapier webhook for further processing.
+ * Configure ZAPIER_WEBHOOK_URL in Script Properties.
+ * @param {Object} payload
+ */
+function postToZapier(payload) {
+  const webhookUrl = getSecret('ZAPIER_WEBHOOK_URL');
+  if (!webhookUrl) {
+    throw new Error('Bitte hinterlege die Zapier-Webhook-URL in den Projekteigenschaften (ZAPIER_WEBHOOK_URL).');
+  }
+
+  UrlFetchApp.fetch(webhookUrl, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+}
+
+/**
+ * Runs the unified automation: collects daily insights and sends them to Zapier.
+ * Combines calendar, mail, Drive, GitHub and sheet prompts.
+ * @return {Object}
+ */
+function runAutomationHub() {
+  const startSummary = startDay();
+  const driveSummary = summarizeDriveFolder();
+  const githubDigest = fetchGitHubDigest();
+  const sheetResult = (() => {
+    try {
+      return processSheetPrompts();
+    } catch (error) {
+      Logger.log('Sheet processing skipped: %s', error.message);
+      return { processed: 0, skipped: true, message: error.message };
+    }
+  })();
+
+  const finalSummaryPrompt = [
+    'Erstelle einen kompakten deutschen Tagesbericht aus diesen Informationen:',
+    'Kalender/Mails: ' + JSON.stringify(startSummary),
+    'Drive: ' + JSON.stringify(driveSummary),
+    'GitHub: ' + JSON.stringify(githubDigest)
+  ].join('\n');
+  const assistantSummary = askOpenAI(finalSummaryPrompt);
+
+  const payload = {
+    generatedAt: new Date(),
+    calendar: startSummary,
+    drive: driveSummary,
+    github: githubDigest,
+    sheet: sheetResult,
+    assistantSummary: assistantSummary
+  };
+
+  postToZapier(payload);
+  return payload;
+}
