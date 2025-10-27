@@ -19,3 +19,29 @@ python monday.py path/to/archives
 
 If no paths are supplied the engine will initialise its state and record the
 absence of evidence, ready for subsequent iterations with real data.
+
+## Codex Task Agent quickstart
+
+The repository also bundles a lightweight task-processing loop that watches the
+`monday_tasks.csv` ledger and automatically updates task status while persisting
+reflections and intermediate metrics to the standard MONDAY artefacts.
+
+```bash
+python monday.py --task-agent --interval 30 --max-cycles 0
+```
+
+- `--task-agent` switches the CLI into the Codex task agent mode.
+- `--interval` controls how many seconds the agent waits between polling
+  iterations (set `0` to process continuously during tests).
+- `--max-cycles` can be used to stop the loop after a fixed number of iterations
+  (default `0` keeps it running until you press `Ctrl+C`).
+
+The agent reads pending entries from `monday_tasks.csv`, marks them as
+completed, and writes supporting context to:
+
+- `monday_memory.json` – stores per-task snapshots under the `tasks` key.
+- `monday_log.csv` – captures each processed task as a timestamped log row.
+- `monday_notes.md` – appends bullet-point reflections for traceability.
+
+Stop the agent at any point with `Ctrl+C`; all artefacts remain on disk for the
+next run.

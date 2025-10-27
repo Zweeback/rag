@@ -22,6 +22,7 @@ import argparse
 import csv
 import datetime as dt
 import json
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -136,6 +137,27 @@ class LeidenCycleResult:
     audit: Dict[str, float]
     improvement_score: float
     change_log: List[str]
+
+
+@dataclass
+class Task:
+    """Representation of a single Monday task row."""
+
+    task_id: str
+    description: str
+    status: str
+    notes: str = ""
+
+    def is_complete(self) -> bool:
+        return self.status.strip().lower() in {"done", "complete", "completed"}
+
+    def mark_complete(self, summary: str) -> None:
+        self.status = "completed"
+        self.notes = summary
+
+    def to_document(self) -> Document:
+        text = f"Task {self.task_id}: {self.description}\n{self.notes}".strip()
+        return Document(path=Path(f"task_{self.task_id}.md"), text=text, tokens=tokenize(text))
 
 
 # ---------------------------------------------------------------------------
@@ -555,36 +577,85 @@ def save_memory(memory_path: Path, memory: Dict[str, object]) -> None:
     memory_path.write_text(json.dumps(memory, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def append_log(log_path: Path, results: Sequence[LeidenCycleResult]) -> None:
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    headers = ["timestamp", "version", "improvement_score", "truth_chains", "audit_drift"]
-    now = dt.datetime.utcnow().isoformat()
-    rows = []
-    for result in results:
-        rows.append([
-            now,
-            result.version,
-            f"{result.improvement_score:.2f}",
-            str(len(result.truth_chains)),
-            f"{result.audit.get('drift', 0.0):.2f}",
-        ])
+LOG_HEADERS = ["timestamp", "version", "improvement_score", "truth_chains", "audit_drift"]
 
+
+def _write_log_rows(log_path: Path, rows: Sequence[Sequence[str]]) -> None:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     needs_header = not log_path.exists()
     with log_path.open("a", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
         if needs_header:
-            writer.writerow(headers)
+            writer.writerow(LOG_HEADERS)
         writer.writerows(rows)
 
 
-def append_notes(notes_path: Path, results: Sequence[LeidenCycleResult]) -> None:
+def append_log(log_path: Path, results: Sequence[LeidenCycleResult]) -> None:
+    now = dt.datetime.utcnow().isoformat()
+    rows: List[List[str]] = []
+    for result in results:
+        rows.append(
+            [
+                now,
+                result.version,
+                f"{result.improvement_score:.2f}",
+                str(len(result.truth_chains)),
+                f"{result.audit.get('drift', 0.0):.2f}",
+            ]
+        )
+    if rows:
+        _write_log_rows(log_path, rows)
+
+
+def _append_notes_block(notes_path: Path, heading: str, reflections: Sequence[str]) -> None:
     notes_path.parent.mkdir(parents=True, exist_ok=True)
     with notes_path.open("a", encoding="utf-8") as handle:
-        handle.write(f"\n## Run at {dt.datetime.utcnow().isoformat()}\n")
-        for result in results:
-            handle.write(f"### {result.version}\n")
-            for reflection in result.reflections:
-                handle.write(f"- {reflection}\n")
+        handle.write(f"\n## {heading}\n")
+        for reflection in reflections:
+            handle.write(f"- {reflection}\n")
+
+
+def append_notes(notes_path: Path, results: Sequence[LeidenCycleResult]) -> None:
+    timestamp = dt.datetime.utcnow().isoformat()
+    for result in results:
+        heading = f"Run at {timestamp} [{result.version}]"
+        if result.reflections:
+            _append_notes_block(notes_path, heading, result.reflections)
+
+
+def persist_memory_snapshot(
+    memory_path: Path,
+    memory: Dict[str, object],
+    task: Task,
+    result: LeidenCycleResult,
+) -> None:
+    task_memory = memory.setdefault("tasks", {})
+    assert isinstance(task_memory, dict)
+    task_memory[task.task_id] = {
+        "status": task.status,
+        "last_version": result.version,
+        "improvement_score": result.improvement_score,
+        "updated_at": dt.datetime.utcnow().isoformat(),
+    }
+    save_memory(memory_path, memory)
+
+
+def persist_notes_reflection(notes_path: Path, task: Task, result: LeidenCycleResult) -> None:
+    heading = f"Task {task.task_id} ({dt.datetime.utcnow().isoformat()})"
+    reflections = [f"Summary: {task.notes}"] + result.reflections
+    _append_notes_block(notes_path, heading, reflections)
+
+
+def persist_log_snapshot(log_path: Path, task: Task, result: LeidenCycleResult) -> None:
+    now = dt.datetime.utcnow().isoformat()
+    row = [
+        now,
+        f"task:{task.task_id}:{result.version}",
+        f"{result.improvement_score:.2f}",
+        str(len(result.truth_chains)),
+        f"{result.audit.get('drift', 0.0):.2f}",
+    ]
+    _write_log_rows(log_path, [row])
 
 
 def ensure_tasks_file(tasks_path: Path) -> None:
@@ -593,6 +664,96 @@ def ensure_tasks_file(tasks_path: Path) -> None:
     with tasks_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(["task_id", "description", "status", "notes"])
+
+
+def load_tasks(tasks_path: Path) -> List[Task]:
+    ensure_tasks_file(tasks_path)
+    tasks: List[Task] = []
+    with tasks_path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            if not row:
+                continue
+            task = Task(
+                task_id=(row.get("task_id") or "").strip(),
+                description=(row.get("description") or "").strip(),
+                status=(row.get("status") or "").strip() or "todo",
+                notes=(row.get("notes") or "").strip(),
+            )
+            if task.task_id:
+                tasks.append(task)
+    return tasks
+
+
+def save_tasks(tasks_path: Path, tasks: Sequence[Task]) -> None:
+    tasks_path.parent.mkdir(parents=True, exist_ok=True)
+    with tasks_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["task_id", "description", "status", "notes"])
+        for task in tasks:
+            writer.writerow([task.task_id, task.description, task.status, task.notes])
+
+
+class CodexTaskAgent:
+    """Agent that polls monday_tasks.csv and updates task statuses."""
+
+    def __init__(
+        self,
+        tasks_path: Path,
+        memory_path: Path,
+        notes_path: Path,
+        log_path: Path,
+        poll_interval: float = 60.0,
+    ) -> None:
+        self.tasks_path = tasks_path
+        self.memory_path = memory_path
+        self.notes_path = notes_path
+        self.log_path = log_path
+        self.poll_interval = poll_interval
+        self.memory = load_memory(memory_path)
+        ensure_tasks_file(tasks_path)
+        self.engine = MondayEngine(self.memory)
+
+    def process_pending_tasks(self) -> int:
+        tasks = load_tasks(self.tasks_path)
+        processed_count = 0
+        for task in tasks:
+            if task.is_complete() or not task.description:
+                continue
+            results = self.engine.run([task.to_document()])
+            if not results:
+                continue
+            latest = results[-1]
+            summary = self._summarise(latest)
+            task.mark_complete(summary)
+            persist_memory_snapshot(self.memory_path, self.memory, task, latest)
+            persist_notes_reflection(self.notes_path, task, latest)
+            persist_log_snapshot(self.log_path, task, latest)
+            processed_count += 1
+        if processed_count:
+            save_tasks(self.tasks_path, tasks)
+        return processed_count
+
+    def run_loop(self, max_cycles: Optional[int] = None) -> None:
+        cycles = 0
+        try:
+            while True:
+                processed = self.process_pending_tasks()
+                cycles += 1
+                if max_cycles and cycles >= max_cycles:
+                    break
+                time.sleep(self.poll_interval if self.poll_interval > 0 else 0)
+                if max_cycles and cycles >= max_cycles:
+                    break
+        except KeyboardInterrupt:
+            pass
+
+    def _summarise(self, result: LeidenCycleResult) -> str:
+        lines = [result.change_log[0] if result.change_log else "Processed task"]
+        if result.truth_chains:
+            lines.append(result.truth_chains[0].hypothesis)
+        lines.append(f"Improvement Score: {result.improvement_score:.2f}")
+        return " | ".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -664,11 +825,40 @@ def parse_args() -> argparse.Namespace:
         default=Path("monday_tasks.csv"),
         help="Task register file",
     )
+    parser.add_argument(
+        "--task-agent",
+        action="store_true",
+        help="Run the Codex task agent loop instead of a single analysis pass",
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=60.0,
+        help="Polling interval in seconds for the task agent",
+    )
+    parser.add_argument(
+        "--max-cycles",
+        type=int,
+        default=0,
+        help="Optional safety cap for task-agent cycles (0 = infinite)",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.task_agent:
+        agent = CodexTaskAgent(
+            tasks_path=args.tasks,
+            memory_path=args.memory,
+            notes_path=args.notes,
+            log_path=args.log,
+            poll_interval=args.interval,
+        )
+        max_cycles = args.max_cycles if args.max_cycles > 0 else None
+        agent.run_loop(max_cycles=max_cycles)
+        return
+
     memory = load_memory(args.memory)
     documents = load_documents(args.paths)
 
