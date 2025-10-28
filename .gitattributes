@@ -1,0 +1,10 @@
+# Treat Unity YAML files as text
+*.meta text
+*.unity text
+*.prefab text
+*.anim text
+*.asset text
+*.mat text
+
+# Auto normalize line endings
+* text=auto

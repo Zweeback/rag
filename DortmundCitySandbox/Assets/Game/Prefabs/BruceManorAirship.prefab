@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &123456
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Name: Bruce Manor Airship
+  m_Component:
+  - component: {fileID: 123457}
+  - component: {fileID: 123458}
+--- !u!4 &123457
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 123456}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+--- !u!114 &123458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 123456}
+  m_Enabled: 1
+  m_Script: {fileID: 11500000, guid: 00000000000000000000000000000000, type: 3}
+  cruiseAltitude: 250
+  dockingCoordinate:
+    latitude: 51.4908
+    longitude: 7.5051

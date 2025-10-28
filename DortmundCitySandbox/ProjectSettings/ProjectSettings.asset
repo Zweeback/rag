@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 22
+  productGUID: 00000000000000000000000000000000
+  AndroidProfiler: 0
+  AndroidFilterTouchesWhenObscured: 0
+  defaultScreenOrientation: 4
+  targetDevice: 2
+  companyName: Zweeback Labs
+  productName: Dortmund City Sandbox
+  defaultCursor: {fileID: 0}
+  cursorHotspot: {x: 0, y: 0}
+  m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_ShowUnitySplashScreen: 1
+  m_HideHomeButton: 0
+  allowFullscreenSwitch: 1
+  macRetinaSupport: 1
+  runInBackground: 1
+  captureSingleScreen: 0
+  forceSingleInstance: 0
+  useFlipModelSwapchain: 1
+  xboxEnableHeadOrientation: 0
+  activeInputHandler: 0
+  applicationIdentifier:
+    Standalone: com.zweeback.dortmundcitysandbox
+  buildNumber:
+    Standalone: 0

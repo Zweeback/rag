@@ -1,0 +1,38 @@
+name: Build (GameCI)
+
+on:
+  push:
+    branches: [work]
+  pull_request:
+    branches: [work]
+
+jobs:
+  build-windows:
+    name: Windows 64-bit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: game-ci/unity-builder@v4
+        with:
+          unityVersion: 2022.3.18f1
+          targetPlatform: StandaloneWindows64
+          projectPath: DortmundCitySandbox
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: build/StandaloneWindows64
+
+  build-webgl:
+    name: WebGL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: game-ci/unity-builder@v4
+        with:
+          unityVersion: 2022.3.18f1
+          targetPlatform: WebGL
+          projectPath: DortmundCitySandbox
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webgl-build
+          path: build/WebGL

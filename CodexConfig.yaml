@@ -1,0 +1,34 @@
+project:
+  id: dortmund-city-sandbox
+  title: "Dortmund City Sandbox – Bruce Manor Airship Edition"
+  version: 0.2.0
+  unity:
+    version: 2022.3.18f1
+    pipeline: URP
+  description: |
+    OpenStreetMap-basierte Dortmund-Simulation mit steuerbarem Bruce-Manor-Luftschiff,
+    Jetpacks, Fahrzeugen, Passanten, Verkehr, Tag/Nacht-Zyklus und Wetter.
+modules:
+  - player
+  - jetpack
+  - vehicles
+  - pedestrians
+  - ai_traffic
+  - navmesh
+  - daynight_cycle
+  - weather_system
+  - minimap
+  - savegame
+  - osm_import
+  - dem_import
+  - streaming
+build:
+  targets:
+    - Windows64
+    - WebGL
+ci:
+  github_actions: true
+  gameci_workflows:
+    - .github/workflows/build.yml
+    - .github/workflows/test.yml
+    - .github/workflows/release.yml
