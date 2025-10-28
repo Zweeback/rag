@@ -94,6 +94,27 @@ NEGATIVE_WORDS = {
     "pain",
 }
 
+# Filenames that should not be auto-ingested when scanning for user lists.
+DEFAULT_LIST_EXCLUDES = {
+    "monday_notes.md",
+    "monday_log.csv",
+    "monday_memory.json",
+    "monday_tasks.csv",
+    "README.md",
+}
+
+# Keywords used to identify user provided lists and chat exports automatically.
+DEFAULT_LIST_KEYWORDS = {
+    "list",
+    "liste",
+    "chat",
+    "codex",
+    "prompt",
+    "notes",
+    "notizen",
+    "todo",
+}
+
 
 @dataclass
 class Document:
@@ -175,6 +196,37 @@ def iter_paths(paths: Sequence[Path]) -> Iterable[Path]:
                     yield candidate
         elif root.is_file():
             yield root
+
+
+def discover_user_lists(root: Path) -> List[Path]:
+    """Discover user-provided list/chat documents to ingest automatically."""
+
+    allowed_suffixes = {".txt", ".md", ".markdown", ".json"}
+    candidates: Dict[Path, Path] = {}
+    for pattern in ["*_chat*.txt", "*.txt", "*.md", "*.markdown", "*.json"]:
+        for path in root.rglob(pattern):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in allowed_suffixes:
+                continue
+            name = path.name
+            if name.startswith("._") or name in DEFAULT_LIST_EXCLUDES:
+                continue
+            try:
+                relative = path.relative_to(root)
+            except ValueError:
+                # Outside the repository root; skip.
+                continue
+            parts = relative.parts[:-1]
+            if any(part.startswith(".") for part in parts):
+                continue
+            if any(part in {"tests", "__pycache__"} for part in parts):
+                continue
+            lower_name = name.lower()
+            if not any(keyword in lower_name for keyword in DEFAULT_LIST_KEYWORDS):
+                continue
+            candidates[path.resolve()] = path
+    return sorted(candidates.values(), key=lambda p: str(p))
 
 
 def load_documents(paths: Sequence[Path], encoding: str = "utf-8") -> List[Document]:
@@ -860,7 +912,19 @@ def main() -> None:
         return
 
     memory = load_memory(args.memory)
-    documents = load_documents(args.paths)
+    document_paths: List[Path]
+    if args.paths:
+        document_paths = list(args.paths)
+    else:
+        document_paths = discover_user_lists(Path.cwd())
+        if document_paths:
+            print(
+                f"Discovered {len(document_paths)} list sources automatically.",
+                flush=True,
+            )
+        else:
+            document_paths = []
+    documents = load_documents(document_paths)
 
     ensure_tasks_file(args.tasks)
 

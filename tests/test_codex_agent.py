@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from monday import CodexTaskAgent, load_tasks
+from monday import CodexTaskAgent, discover_user_lists, load_tasks
 
 
 def write_tasks(tmp_path: Path, rows) -> Path:
@@ -73,3 +73,26 @@ def test_agent_processes_pending_tasks_and_persists(tmp_path):
 
     assert rows[0] == ["timestamp", "version", "improvement_score", "truth_chains", "audit_drift"]
     assert rows[1][1].startswith("task:1:")
+
+
+def test_discover_user_lists_picks_keyword_files(tmp_path):
+    chat_file = tmp_path / "_chat 8.txt"
+    chat_file.write_text("hello", encoding="utf-8")
+    liste_file = tmp_path / "MeineListe.md"
+    liste_file.write_text("- item", encoding="utf-8")
+    ignored = tmp_path / "monday_notes.md"
+    ignored.write_text("should skip", encoding="utf-8")
+    hidden = tmp_path / "._shadow_list.txt"
+    hidden.write_text("nope", encoding="utf-8")
+    nested = tmp_path / "tests" / "fake.txt"
+    nested.parent.mkdir()
+    nested.write_text("chat", encoding="utf-8")
+
+    discovered = discover_user_lists(tmp_path)
+
+    names = {path.name for path in discovered}
+    assert chat_file.name in names
+    assert liste_file.name in names
+    assert "monday_notes.md" not in names
+    assert "._shadow_list.txt" not in names
+    assert "fake.txt" not in names

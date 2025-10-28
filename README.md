@@ -17,7 +17,11 @@ Run MONDAY.exe from the repository root:
 python monday.py path/to/archives
 ```
 
-If no paths are supplied the engine will initialise its state and record the
+If no paths are supplied the engine will look for chat exports and list files in
+the repository root (e.g. `_chat*.txt`, `*Liste*.md`, Codex manifests) and
+process every discovered document automatically. This makes it easy to drop new
+lists into the project without updating the command line arguments. When no
+matching files are found the engine still initialises its state and records the
 absence of evidence, ready for subsequent iterations with real data.
 
 ## Codex Task Agent quickstart
