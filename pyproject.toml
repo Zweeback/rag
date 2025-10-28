@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag-app"
+version = "0.1.0"
+description = "FastAPI backend and utilities for the DeepSeek Ping-Pong chat demo"
+authors = [{ name = "Unknown" }]
+license = { text = "Proprietary" }
+requires-python = ">=3.10"
+readme = "README.md"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "pyyaml",
+    "requests",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+app = [
+    "static/*",
+    "static/**/*",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.3",
+    "black>=24.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+asyncio_mode = "auto"
+filterwarnings = [
+    "error::DeprecationWarning",
+]
+
+[tool.ruff]
+select = ["E", "F", "I", "W", "UP", "N", "B"]
+ignore = ["E501"]
+line-length = 100
+target-version = "py310"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]

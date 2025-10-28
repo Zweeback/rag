@@ -4,6 +4,52 @@ Dieses Repository enthält den Alice-Prompt, ein Skript für einen autonomen
 Codex-Iterationsloop sowie eine kleine Weboberfläche für einen Ping-Pong-Chat
 mit DeepSeek.
 
+## Schnellstart für Entwickler:innen
+
+Das Projekt ist jetzt mit einer zeitgemäßen Python-Projektstruktur versehen.
+Die wichtigsten Einstiegspunkte:
+
+- `pyproject.toml` bündelt Runtime- und Dev-Abhängigkeiten (Tests, Linting,
+  Formatting).
+- `Makefile` stellt Komfort-Befehle wie `make install-dev`, `make lint` und
+  `make test` bereit.
+- `Dockerfile` erlaubt den schnellen Container-Start des FastAPI-Backends.
+- `tests/` enthält Pytest-Szenarien für Health-Check, Root-Route und den
+  Chat-Endpunkt.
+
+### Lokale Installation
+
+```bash
+make install-dev
+```
+
+Das Kommando installiert das Projekt im Editable-Mode und ergänzt Dev-Tools
+(`pytest`, `ruff`, `black`). Alternativ kannst du `pip install -e .[dev]`
+verwenden.
+
+### Qualitätschecks und Tests
+
+```bash
+make lint   # Ruff-Analyse
+make format # Black-Formatierung
+make test   # Pytest-Suite
+```
+
+### Start des Backends
+
+```bash
+make run
+```
+
+Oder mit Docker:
+
+```bash
+docker build -t rag-app .
+docker run --rm -p 8000:8000 rag-app
+```
+
+Damit steht der FastAPI-Server unter `http://localhost:8000` bereit.
+
 ## Prompt-Arsenal für den Codex-Loop
 
 Die Datei [`codex_prompts.md`](codex_prompts.md) bündelt fertig formulierte
