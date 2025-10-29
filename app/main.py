@@ -7,7 +7,7 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 def _env_int(name: str, default: int) -> int:
     value = os.getenv(name)
@@ -42,8 +42,7 @@ class UsageStats(BaseModel):
     completion_tokens: Optional[int] = None
     total_tokens: Optional[int] = None
 
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")
 
 
 class ChatRequest(BaseModel):
@@ -83,7 +82,12 @@ def _prepare_messages(history: List[ChatTurn], user_message: str, system_prompt:
         message_turns.append(ChatTurn(role="system", content=prompt))
     message_turns.extend(cleaned_history)
     message_turns.append(ChatTurn(role="user", content=user_message))
-    return [turn.dict() for turn in message_turns]
+    def _model_dump(turn: ChatTurn) -> Dict[str, str]:
+        if hasattr(turn, "model_dump"):
+            return turn.model_dump()
+        return turn.dict()
+
+    return [_model_dump(turn) for turn in message_turns]
 
 
 async def _call_deepseek(messages: List[Dict[str, str]]) -> Tuple[str, Optional[UsageStats]]:
