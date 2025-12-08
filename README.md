@@ -50,6 +50,21 @@ docker run --rm -p 8000:8000 rag-app
 
 Damit steht der FastAPI-Server unter `http://localhost:8000` bereit.
 
+### ChatGPT-Exporte ins RAG einspeisen
+
+Wenn du Chat-Verläufe aus einem GPT-Export (z. B. aus Google Drive) in die
+eingebaute RAG-Datenbank übernehmen möchtest, nutze das Skript
+`gpt_export_ingest.py`:
+
+```bash
+python gpt_export_ingest.py /pfad/zum/export --source gdrive --chunk-size 1200
+```
+
+Das Skript liest alle JSON-Dateien im Verzeichnis oder eine einzelne Datei und
+legt für jede Unterhaltung sauber etikettierte Chunks in der `alice_autoloop`
+Datenbank ab. Über die bestehenden RAG-Retrieval-Helfer kannst du die Inhalte
+danach direkt wiederfinden.
+
 ## Prompt-Arsenal für den Codex-Loop
 
 Die Datei [`codex_prompts.md`](codex_prompts.md) bündelt fertig formulierte
@@ -183,6 +198,24 @@ Viel Erfolg bei der Monetarisierung deiner Ideen!
     ```bash
     uvicorn app.main:app --reload
     ```
+
+## Chungking & Wedding HTML-Agent nutzen
+
+Der Server stellt zusätzlich eine fokussierte HTML-Oberfläche für die beiden Szenen "Chungking" und "Wedding" bereit. So startest du sie:
+
+1. Backend wie oben beschrieben starten.
+2. Im Browser `http://localhost:8000/chungking-wedding` öffnen.
+3. Szene über die Buttons wählen, Befehle im Formular eingeben und die Antworten des LLM im Transkript verfolgen.
+4. Der Verlauf lässt sich jederzeit leeren; das Frontend zeigt außerdem den Model-Status und Tokenverbrauch an.
+
+### HTML-App für "Chungking & Wedding"
+
+Unter `http://localhost:8000/chungking-wedding` findest du eine kleine HTML-App
+mit zwei Szenenprofilen (Chungking Express vs. Berlin-Wedding). Jede Szene
+liefert einen eigenen System-Prompt, der direkt gegen die vorhandene LLM-API
+(`/api/chat`) geschickt wird. Damit kannst du die Seite aus ChatGPT oder jedem
+anderen Sprachmodell heraus fernsteuern und dir Regie- oder Story-Cues für den
+gewählten Schauplatz generieren lassen.
 4. Öffne `http://127.0.0.1:8000` im Browser und starte den Ping-Pong-Dialog.
 
 Der Browser-Client bietet einen optionalen System-Prompt, einen Reset-Button,

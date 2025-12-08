@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chungking & Wedding – LLM-gesteuerte Szenen</title>
+  <link rel="stylesheet" href="/static/chungking_wedding.css" />
+</head>
+<body>
+  <main class="cw-container">
+    <header class="cw-header">
+      <div>
+        <p class="eyebrow">LLM-Remote-Steuerung</p>
+        <h1>Chungking & Wedding</h1>
+        <p class="lede">Zwei urbane Szenen als HTML-App, die du direkt aus ChatGPT oder jedem anderen Sprachmodell via API ansprechen kannst. Wähle den Schauplatz, schicke Befehle und erhalte strukturierte Antworten.</p>
+      </div>
+      <div class="badge">HTML Agent</div>
+    </header>
+
+    <section class="grid">
+      <article class="card" data-scenario="chungking">
+        <div class="card-top">
+          <h2>Chungking</h2>
+          <p class="subtitle">Neon, Gassen, Express-Energie.</p>
+        </div>
+        <p class="body">Hongkongs Labyrinth aus Foodstalls, flimmernden Reklamen und schnellen Perspektivwechseln. Ideal für schnelle Schnitte, Street-Szenen und Agentenflair.</p>
+        <ul class="details">
+          <li>Modus: <strong>Verspielter Agentenfilm</strong></li>
+          <li>Tempo: <strong>hoch</strong></li>
+          <li>Atmosphäre: <strong>Neon, Regen, Close-Ups</strong></li>
+        </ul>
+        <button class="ghost" data-activate="chungking">Aktivieren</button>
+      </article>
+
+      <article class="card" data-scenario="wedding">
+        <div class="card-top">
+          <h2>Wedding</h2>
+          <p class="subtitle">Berlin-Nord, rau und herzlich.</p>
+        </div>
+        <p class="body">Kiezgeschichten zwischen Plattenbau, Spätis und U9. Hier zählt Impro, Community-Vibes und ein klarer sozialer Ton.</p>
+        <ul class="details">
+          <li>Modus: <strong>Doku-Drama</strong></li>
+          <li>Tempo: <strong>mittel</strong></li>
+          <li>Atmosphäre: <strong>authentisch, direkt, bodenständig</strong></li>
+        </ul>
+        <button class="ghost" data-activate="wedding">Aktivieren</button>
+      </article>
+    </section>
+
+    <section class="console">
+      <div class="console-top">
+        <div>
+          <p class="eyebrow">Aktive Szene</p>
+          <h3 id="active-label">Chungking</h3>
+          <p class="hint">Der Agent nutzt das System-Prompt-Profil der gewählten Szene und antwortet auf deine Befehle.</p>
+        </div>
+        <div class="status">
+          <span id="health" aria-live="polite">Backend wird geprüft …</span>
+          <span id="usage"></span>
+        </div>
+      </div>
+
+      <div id="transcript" class="transcript" role="log" aria-live="polite"></div>
+
+      <form id="command-form" class="command-form">
+        <label for="command">Befehl / Cue</label>
+        <textarea id="command" name="command" rows="3" placeholder="z. B. "Schreibe eine Montagesequenz, die beide Orte verbindet"" required></textarea>
+        <div class="actions">
+          <button type="submit">Senden</button>
+          <button type="button" id="reset" class="ghost">Verlauf leeren</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/static/chungking_wedding.js" defer></script>
+</body>
+</html>

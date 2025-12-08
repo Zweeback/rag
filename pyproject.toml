@@ -41,7 +41,6 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-asyncio_mode = "auto"
 filterwarnings = [
     "error::DeprecationWarning",
 ]

@@ -140,6 +140,12 @@ async def index() -> FileResponse:
     return FileResponse("app/static/index.html")
 
 
+@app.get("/chungking-wedding", response_class=FileResponse)
+async def chungking_wedding() -> FileResponse:
+    """HTML-App für die Szenen Chungking & Wedding, angesteuert via LLM."""
+    return FileResponse("app/static/chungking_wedding.html")
+
+
 @app.get("/api/health")
 async def health() -> Dict[str, str]:
     """Einfache Readiness-Route für den Frontend-Client."""
