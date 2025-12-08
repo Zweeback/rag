@@ -223,6 +223,35 @@ Statusmeldungen samt Token-Zählung sowie eine automatische Health-Prüfung der
 API. Der Verlauf wird clientseitig gehalten und bei jedem Request an das
 Backend mitgeschickt, damit DeepSeek den Kontext kennt.
 
+## CogniDistill – selbstverbesserndes Wissenssystem
+
+Das Paket `cognidistill` bringt ein regelbasiertes, selbstverbesserndes
+Wissenssystem inklusive Bootstrap-Entitäten und Exportfunktionen mit. Du kannst
+es direkt per CLI testen:
+
+```bash
+python -m cognidistill.cli /statistik
+python -m cognidistill.cli "/lade Retrieval-Augmented Generation verbindet Suche und Textproduktion."
+python -m cognidistill.cli "/frage Was ist Retrieval-Augmented Generation?"
+```
+
+Oder du nutzt es programmatisch:
+
+```python
+from cognidistill import CogniDistillSystem, build_openai_custom_entity_payload
+
+system = CogniDistillSystem()
+system.lade("Wissensdistillation extrahiert Kerninformationen aus großen Modellen.")
+result = system.frage("Was ist Wissensdistillation?")
+print(result.answer, result.confidence)
+
+payload = build_openai_custom_entity_payload(system.kb.snapshot())
+print(payload["name"], payload["version"])
+```
+
+Der Export erzeugt unter anderem einen OpenAI-Custom-Entity-Payload, mit dem du
+die Wissensbasis als Kostüm-Entity weiterverwenden kannst.
+
 ## Iterationen mit Audit-Scoring protokollieren
 
 Das Modul `alice_autoloop.py` erweitert die klassische Schleife um eine

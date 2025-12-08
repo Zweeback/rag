@@ -23,7 +23,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*"]
+include = ["app*", "cognidistill*"]
 
 [tool.setuptools.package-data]
 app = [
