@@ -5,7 +5,7 @@ from typing import Dict, List, Literal, Optional, Tuple
 
 import httpx
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -141,9 +141,36 @@ async def index() -> FileResponse:
 
 
 @app.get("/api/health")
-async def health() -> Dict[str, str]:
-    """Einfache Readiness-Route für den Frontend-Client."""
-    status = {"status": "ok", "model": DEFAULT_MODEL}
+async def health() -> JSONResponse:
+    """Readiness-Route, die fehlende Pflicht-Settings meldet."""
+
+    issues = []
+    if not os.getenv("DEEPSEEK_API_KEY"):
+        issues.append(
+            {
+                "name": "DEEPSEEK_API_KEY",
+                "message": "Setze DEEPSEEK_API_KEY mit einem gültigen DeepSeek-API-Schlüssel.",
+            }
+        )
+    if not DEEPSEEK_API_URL:
+        issues.append(
+            {
+                "name": "DEEPSEEK_API_URL",
+                "message": "DEEPSEEK_API_URL ist leer – konfiguriere die API-Endpoint-URL.",
+            }
+        )
+    if not DEFAULT_MODEL:
+        issues.append(
+            {
+                "name": "DEEPSEEK_MODEL",
+                "message": "DEEPSEEK_MODEL ist leer – lege das gewünschte Modell fest.",
+            }
+        )
+
+    payload: Dict[str, object] = {"status": "ok", "model": DEFAULT_MODEL or "unknown"}
     if DEFAULT_SYSTEM_PROMPT:
-        status["system_prompt"] = "preset"
-    return status
+        payload["system_prompt"] = "preset"
+    if issues:
+        payload.update({"status": "error", "issues": issues})
+
+    return JSONResponse(payload, status_code=200 if not issues else 503)
