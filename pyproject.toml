@@ -23,7 +23,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*"]
+include = ["app*", "cognidistill*"]
 
 [tool.setuptools.package-data]
 app = [
@@ -41,7 +41,6 @@ dev = [
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-asyncio_mode = "auto"
 filterwarnings = [
     "error::DeprecationWarning",
 ]

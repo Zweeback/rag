@@ -1,0 +1,232 @@
+:root {
+  color-scheme: light dark;
+  --bg: #0c0c0f;
+  --panel: #14141b;
+  --panel-alt: #181825;
+  --text: #f5f5f7;
+  --muted: #a7a7b4;
+  --accent: #7fe0b1;
+  --accent-2: #7ac8ff;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 20% 20%, rgba(127, 224, 177, 0.08), transparent 25%),
+    radial-gradient(circle at 80% 0%, rgba(122, 200, 255, 0.1), transparent 20%),
+    var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.cw-container {
+  max-width: 1100px;
+  margin: 0 auto 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cw-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cw-header h1 {
+  margin: 4px 0 8px;
+  font-size: 2rem;
+}
+
+.eyebrow {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.75rem;
+  margin: 0 0 4px;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  max-width: 720px;
+}
+
+.badge {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  color: #0c0c0f;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  align-self: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.card h2 {
+  margin: 0;
+}
+
+.card .subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.card .body {
+  margin: 0;
+  color: var(--muted);
+}
+
+.details {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--text);
+  display: grid;
+  gap: 4px;
+}
+
+button {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  color: #0c0c0f;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+button:hover { transform: translateY(-1px); }
+
+button:active { transform: translateY(0); }
+
+button.ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.console {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.console-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.hint {
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  color: var(--muted);
+}
+
+.transcript {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  height: 280px;
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+}
+
+.message {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.message .role {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.message.user {
+  border-color: rgba(127, 224, 177, 0.35);
+}
+
+.message.assistant {
+  border-color: rgba(122, 200, 255, 0.35);
+}
+
+.command-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.command-form textarea {
+  width: 100%;
+  background: #0f0f16;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 10px;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 96px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  body { padding: 16px; }
+  .console-top { flex-direction: column; }
+  .status { align-items: flex-start; }
+}
