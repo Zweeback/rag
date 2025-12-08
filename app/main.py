@@ -1,6 +1,7 @@
 """Backend für den DeepSeek Ping-Pong Chat."""
 
 import os
+from pathlib import Path
 from typing import Dict, List, Literal, Optional, Tuple
 
 import httpx
@@ -28,8 +29,11 @@ MAX_OUTPUT_TOKENS = _env_int("DEEPSEEK_MAX_OUTPUT_TOKENS", 1024)
 MAX_MESSAGE_LENGTH = _env_int("DEEPSEEK_MAX_MESSAGE_LENGTH", 4000)
 MAX_HISTORY_TURNS = _env_int("DEEPSEEK_MAX_HISTORY_TURNS", 12)
 
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
 app = FastAPI(title="DeepSeek Ping-Pong Chat")
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 class ChatTurn(BaseModel):
@@ -63,6 +67,10 @@ def _api_key() -> str:
     if not key:
         raise HTTPException(status_code=500, detail="DEEPSEEK_API_KEY ist nicht gesetzt.")
     return key
+
+
+def _api_key_present() -> bool:
+    return bool(os.getenv("DEEPSEEK_API_KEY"))
 
 
 def _limit_history(history: List[ChatTurn]) -> List[ChatTurn]:
@@ -137,19 +145,24 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
 @app.get("/", response_class=FileResponse)
 async def index() -> FileResponse:
-    return FileResponse("app/static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/chungking-wedding", response_class=FileResponse)
 async def chungking_wedding() -> FileResponse:
     """HTML-App für die Szenen Chungking & Wedding, angesteuert via LLM."""
-    return FileResponse("app/static/chungking_wedding.html")
+    return FileResponse(STATIC_DIR / "chungking_wedding.html")
 
 
 @app.get("/api/health")
-async def health() -> Dict[str, str]:
+async def health() -> Dict[str, object]:
     """Einfache Readiness-Route für den Frontend-Client."""
-    status = {"status": "ok", "model": DEFAULT_MODEL}
+    ready = _api_key_present()
+    status = {
+        "status": "ok" if ready else "error",
+        "model": DEFAULT_MODEL,
+        "api_key": "present" if ready else "missing",
+    }
     if DEFAULT_SYSTEM_PROMPT:
         status["system_prompt"] = "preset"
     return status

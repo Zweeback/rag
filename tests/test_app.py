@@ -10,7 +10,8 @@ from app.main import ChatRequest, ChatTurn, app
 
 
 @pytest.mark.anyio
-async def test_health_endpoint_reports_ok_status() -> None:
+async def test_health_endpoint_reports_ok_status(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "dummy")
     transport = ASGITransport(app=app)
 
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -19,7 +20,22 @@ async def test_health_endpoint_reports_ok_status() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
+    assert payload["api_key"] == "present"
     assert "model" in payload
+
+
+@pytest.mark.anyio
+async def test_health_endpoint_reports_missing_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/health")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "error"
+    assert payload["api_key"] == "missing"
 
 
 @pytest.mark.anyio
