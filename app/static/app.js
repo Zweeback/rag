@@ -63,7 +63,11 @@ async function fetchHealth() {
     }
     const data = await response.json();
     const state = data.status === "ok" ? "success" : "error";
-    setStatus(data.status === "ok" ? "Bereit." : "Backend meldet ein Problem.", state);
+    const message =
+      data.status === "ok"
+        ? "Bereit."
+        : data.issues?.[0]?.message || "Backend meldet ein Problem.";
+    setStatus(message, state);
     if (data.system_prompt === "preset" && !systemPromptEl.value) {
       systemPromptEl.placeholder = "Server-Preset aktiv – optional überschreiben.";
     }
